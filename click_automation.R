@@ -159,10 +159,21 @@ download_files <- function(remote_selenium, clicks_file, append_to_name, destPat
 
 #if old one still running, shut it down; we do this to make sure there are no lingering files
 containerID <- system("docker container ls", intern = TRUE)
-if (length(containerID) == 2) {
-  #stop and kill container
-  dockerStop <- system(paste0("docker stop ", containerID), intern = TRUE)
-  dockerRM <- system(paste0("docker rm ", containerID), intern = TRUE)
+if (length(containerID) >= 2) {
+  #loop through all and kill off anything on port 4445
+  
+  containerID <- containerID[2:length(containerID)]
+  for (row_no in length(containerID)) {
+    if (grepl("0.0.0.0:4445->4444", containerID[row_no])) {
+      ID <- strsplit(containerID, split="        ")[[row_no]][1]
+      
+      #stop and kill container
+      dockerStop <- system(paste0("docker stop ", ID), intern = TRUE)
+      dockerRM <- system(paste0("docker rm ", ID), intern = TRUE)
+      
+    }
+  }
+
 }
 
 #start a new container
@@ -179,7 +190,7 @@ remDr <- RSelenium::remoteDriver(remoteServerAddr = "localhost",
 remDr$open()
 
 
-clicks <- read_excel("C:\\Box Sync\\R-scripts\\scraper\\file_downloader\\clicks1.xlsx", sheet="url")
+clicks <- read_excel("C:\\Box Sync\\R-scripts\\scraper\\click_automation\\clicks1.xlsx", sheet="url")
 destination <- "C:\\Users\\keith_bailey\\Documents\\MarketData2\\"
 
 for (df_row in  1:nrow(clicks)){
